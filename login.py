@@ -3,14 +3,14 @@ from PyQt5.QtWidgets import QApplication
 import sys
 import login_ui
 
-class ExampleApp(QtWidgets.QMainWindow, login_ui.Ui_Login_page):
+class loginApp(QtWidgets.QMainWindow, login_ui.Ui_Login_page):
     def __init__(self, parent=None):
-        super(ExampleApp, self).__init__(parent)
+        super(loginApp, self).__init__(parent)
         self.setupUi(self)
 
 def main():
     app = QApplication(sys.argv)
-    form = ExampleApp()
+    form = loginApp()
     form.show()
     app.exec_()
 
