@@ -56,11 +56,11 @@ class Ui_Login_page(object):
 
         self.img_path = ""
         Login_page.setObjectName("Login_page")
-        Login_page.resize(937, 673)
+        Login_page.resize(937, 800)
         self.centralwidget = QtWidgets.QWidget(Login_page)
         self.centralwidget.setObjectName("centralwidget")
         self.gridLayoutWidget = QtWidgets.QWidget(self.centralwidget)
-        self.gridLayoutWidget.setGeometry(QtCore.QRect(50, 110, 651, 521))
+        self.gridLayoutWidget.setGeometry(QtCore.QRect(50, 110, 651, 651))
         # self.gridLayoutWidget.setFocusPolicy(QtCore.Qt.ClickFocus)
         self.gridLayoutWidget.setObjectName("gridLayoutWidget")
         self.gridLayout = QtWidgets.QGridLayout(self.gridLayoutWidget)
@@ -160,7 +160,7 @@ class Ui_Login_page(object):
                     f.write(img_data)
                 image = Image.open("temp.jpg")
 
-                image = image.resize((651, 521), Image.ANTIALIAS)
+                image = image.resize((651, 651), Image.ANTIALIAS)
                 image_list = self.cut_image(image)
                 index = 0
                 for i in range(8):
@@ -254,9 +254,6 @@ class Ui_Login_page(object):
                 print(p)
                 key = "".join(p)
 
-                # raw_data["Catalogue"] = self.comboBox.currentText()
-                # raw_data["Password"] = hashlib.md5(key.encode("utf-8")).hexdigest()
-                # raw_data["image"] = base64_string
                 self.raw_data[self.comboBox.currentText()] = {"Password":hashlib.md5(key.encode("utf-8")).hexdigest(), "image" : base64_string}
 
                 with open("store","w") as f:
