@@ -7,9 +7,13 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog, QInputDialog, QMessageBox
 from PIL import Image
-# from PIL.ImageQt import ImageQt
+import hashlib
+import json
+from pathlib import Path
+
+from base64 import b64encode
 
 from PIL.ImageQt import ImageQt
 
@@ -32,21 +36,20 @@ class MyQLabel(QtWidgets.QLabel):
 
 class Ui_Login_page(object):
 
-    # def __init__(self):
-    #     self.statusBar = None
-    #     self.clear_btn = None
-    #     self.save_btn = None
-    #     self.import_btn = None
-    #     self.d = None
-    #     self.gridLayout = None
-    #     self.gridLayoutWidget = None
-    #     self.centralwidget = None
-    #     self.password_list = None
-    #     self.comboBox = None
-    #     self.New_btn = None
+    def __init__(self):
+        self.d = {}
+        self.gridLayout = None
+        self.gridLayoutWidget = None
+        self.centralwidget = None
+        self.img_path = ""
+        self.storage = []
+        self.record_table = {}
+
 
     def setupUi(self, Login_page):
         self.password_list = set()
+
+        self.img_path = ""
         Login_page.setObjectName("Login_page")
         Login_page.resize(937, 673)
         self.centralwidget = QtWidgets.QWidget(Login_page)
@@ -73,12 +76,17 @@ class Ui_Login_page(object):
         self.New_btn.setEnabled(True)
         self.New_btn.setGeometry(QtCore.QRect(50, 50, 191, 28))
         self.New_btn.setObjectName("New_btn")
+        self.New_btn.clicked.connect(self.new_catalogue)
+
         self.comboBox = QtWidgets.QComboBox(self.centralwidget)
         self.comboBox.setGeometry(QtCore.QRect(280, 50, 231, 31))
         self.comboBox.setAcceptDrops(True)
         self.comboBox.setEditable(False)
         self.comboBox.setObjectName("comboBox")
-        self.comboBox.addItem("")
+        # self.infor = ["Or select an exist catalogue"]
+        # self.comboBox.addItems(self.infor)
+        self.comboBox.addItem("Or select an exist catalogue")
+
         self.import_btn = QtWidgets.QPushButton(self.centralwidget)
         self.import_btn.setGeometry(QtCore.QRect(750, 235, 131, 81))
         self.import_btn.setObjectName("import_btn")
@@ -86,9 +94,10 @@ class Ui_Login_page(object):
         self.save_btn = QtWidgets.QPushButton(self.centralwidget)
         self.save_btn.setGeometry(QtCore.QRect(750, 350, 131, 81))
         self.save_btn.setObjectName("save_btn")
+        self.save_btn.clicked.connect(self.save_catalogue)
         self.clear_btn = QtWidgets.QPushButton(self.centralwidget)
         self.clear_btn.setGeometry(QtCore.QRect(750, 120, 131, 81))
-        self.clear_btn.setCheckable(True)
+        # self.clear_btn.setCheckable(True)
         self.clear_btn.setObjectName("clear_btn")
         self.clear_btn.clicked.connect(self.clear_select)
 
@@ -98,7 +107,9 @@ class Ui_Login_page(object):
         Login_page.setStatusBar(self.statusBar)
 
         self.retranslateUi(Login_page)
+        self.read_storage()
         QtCore.QMetaObject.connectSlotsByName(Login_page)
+
 
     def retranslateUi(self, Login_page):
         _translate = QtCore.QCoreApplication.translate
@@ -108,15 +119,106 @@ class Ui_Login_page(object):
                 self.d["label" + str(i) + str(j)].setText(str(i) + str(j))
 
         self.New_btn.setText(_translate("Login_page", "Set a new catalogue"))
-        self.comboBox.setCurrentText(_translate("Login_page", "Or select an exist catalogue"))
-        self.comboBox.setItemText(0, _translate("Login_page", "Or select an exist catalogue"))
+        # self.comboBox.setCurrentText(_translate("Login_page", "Or select an exist catalogue"))
+        # self.comboBox.setItemText(0, _translate("Login_page", "Or select an exist catalogue"))
         self.import_btn.setText(_translate("Login_page", "Import picture"))
         self.save_btn.setText(_translate("Login_page", "Save"))
         self.clear_btn.setText(_translate("Login_page", "Clear"))
 
+
+    def read_storage(self):
+        my_file = Path("store")
+        if my_file.is_file():
+            try:
+                with open("store", "r") as file:
+                    self.storage = json.loads(file.read())[0]
+
+                list_cata = self.storage.keys()
+                self.comboBox.addItems(list_cata)
+                # self.comboBox.
+
+
+            except Exception as e:
+                QMessageBox.warning(self.centralwidget, 'Error',
+                                    f'The following error occurred:\n{type(e)}: {e}')
+        else:
+            pass
+
+
+
+
+
+
+    def save_catalogue(self):
+        try:
+            if self.comboBox.currentIndex() == 0:
+                raise ValueError("Plase select an catalogue or Create one")
+            if self.img_path == "":
+                raise ValueError("please choose a picture first")
+            if len(self.password_list) == 0:
+                raise ValueError("You need to select your password")
+
+
+            # image = Image.open(self.img_path)
+            # image = image.resize((651, 651), Image.ANTIALIAS)
+            try:
+                with open(self.img_path, 'rb') as jpg_file:
+                    byte_content = jpg_file.read()
+                base64_bytes = b64encode(byte_content)
+                base64_string = base64_bytes.decode('utf-8')
+                raw_data = {}
+                p = sorted(list(self.password_list))
+                print(p)
+                key = "".join(p)
+
+                # raw_data["Catalogue"] = self.comboBox.currentText()
+                # raw_data["Password"] = hashlib.md5(key.encode("utf-8")).hexdigest()
+                # raw_data["image"] = base64_string
+                raw_data[self.comboBox.currentText()] = {"Password":hashlib.md5(key.encode("utf-8")).hexdigest(),"image":base64_string}
+                self.storage.append(raw_data)
+                with open("store","w") as f:
+                    f.write(json.dumps(self.storage))
+
+
+
+                print("read")
+            except Exception as e:
+                QMessageBox.warning(self.centralwidget, 'Error',
+                                    f'The following error occurred:\n{type(e)}: {e}')
+        # else:
+        #     QMessageBox.warning(self.centralwidget, 'Error',
+        #                         "please choose a picture first")
+        except ValueError as e:
+            QMessageBox.warning(self.centralwidget, 'Error', repr(e))
+
+
+
+
+
+
+    def clear_pic(self):
+        for i in range(8):
+            for j in range(8):
+                self.d["label" + str(i) + str(j)].clear()
+                self.d["label" + str(i) + str(j)].setText(str(i) + str(j))
+
+    def new_catalogue(self):
+        text, ok = QInputDialog.getText(self.centralwidget, 'Text Input Dialog', 'Set a new catalogue')
+        if ok:
+            # list1 = self.comboBox.
+            self.comboBox.addItem(text)
+            self.comboBox.setCurrentText(text)
+            self.clear_pic()
+            self.clear_select()
+
+        else:
+            pass
+
     def selected_coordinate(self, coord):
 
         self.d["label" + coord].setFrameShape(QtWidgets.QFrame.Shape.Box)
+        # self.d["label" + coord].setFrameShadow(QtWidgets.QFrame.Shadow.Raised)
+        self.d["label" + coord].setLineWidth(2)
         self.password_list.add(coord)
         print(self.password_list)
 
@@ -126,20 +228,7 @@ class Ui_Login_page(object):
                 self.d["label" + str(i) + str(j)].setFrameShape(QtWidgets.QFrame.Shape.NoFrame)
         self.password_list.clear()
 
-    def fill_image(self,image):
-        width, height = image.size
-        # 选取长和宽中较大值作为新图片的
-        new_image_length = width if width > height else height
-        # 生成新图片[白底]
-        new_image = Image.new(image.mode, (new_image_length, new_image_length), color='white')
-        # 将之前的图粘贴在新图上，居中
-        if width > height:  # 原图宽大于高，则填充图片的竖直维度
-            # (x,y)二元组表示粘贴上图相对下图的起始位置
-            new_image.paste(image, (0, int((new_image_length - height) / 2)))
-        else:
-            new_image.paste(image, (int((new_image_length - width) / 2), 0))
-        return new_image
-    def cut_image(self,image):
+    def cut_image(self, image):
         width, height = image.size
         item_width = int(width / 8)
         box_list = []
@@ -151,27 +240,34 @@ class Ui_Login_page(object):
                 box_list.append(box)
         image_list = [image.crop(box) for box in box_list]
         return image_list
+
     def import_pic(self):
-        imgname, imgtype = QFileDialog.getOpenFileNames(self.centralwidget, "Select a picture", "", "*.jpg;;*.png;;All Files(*)")
-        image = Image.open(imgname[0])
-        image = image.resize((651, 651),Image.ANTIALIAS)
 
+        self.img_path, imgtype = QFileDialog.getOpenFileName(self.centralwidget, "Select a picture", "",
+                                                              "*.jpg;;*.png")
+        try:
+            image = Image.open(self.img_path)
 
-        # image.show()
-        # image = self.fill_image()
-        image_list = self.cut_image(image)
+            image = image.resize((651, 651), Image.ANTIALIAS)
 
-        index = 0
-        # pixmap = ImageQt(image_list[0])
-        # pixmap = PIL.ImageQt.
-        # self.d["label00"].setPixmap(image_list[0])
+            # image.show()
+            # image = self.fill_image()
+            image_list = self.cut_image(image)
 
+            index = 0
+            # pixmap = ImageQt(image_list[0])
+            # pixmap = PIL.ImageQt.
+            # self.d["label00"].setPixmap(image_list[0])
 
+            for i in range(8):
+                for j in range(8):
+                    im = image_list[index].convert("RGBA")
+                    pix = QtGui.QPixmap.fromImage(ImageQt(im))
+                    self.d["label" + str(i) + str(j)].setPixmap(pix)
+                    index += 1
 
-        for i in range(8):
-            for j in range(8):
-                im = image_list[index].convert("RGBA")
-                pix = QtGui.QPixmap.fromImage(ImageQt(im))
-                self.d["label" + str(i) + str(j)].setPixmap(pix)
-                index += 1
+        except Exception as e:
+            QMessageBox.warning(self.centralwidget, 'Error',
+                                f'The following error occurred:\n{type(e)}: {e}')
+
 
