@@ -8,10 +8,11 @@
 import binascii
 import hashlib
 import json
+from zxcvbn import zxcvbn
 
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtGui import QStandardItem
-from PyQt5.QtWidgets import QHeaderView
+from PyQt5.QtWidgets import QHeaderView, QMessageBox, QAbstractItemView
 
 
 class Ui_show_page(object):
@@ -32,7 +33,7 @@ class Ui_show_page(object):
 
     def setupUi(self, show_page):
         show_page.setObjectName("show_page")
-        show_page.resize(624, 491)
+        show_page.resize(624,515)
         self.centralwidget = QtWidgets.QWidget(show_page)
         self.centralwidget.setObjectName("centralwidget")
         self.tableView = QtWidgets.QTableView(self.centralwidget)
@@ -43,9 +44,12 @@ class Ui_show_page(object):
 
         self.tableView.setObjectName("tableView")
         self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
-        self.model = QtGui.QStandardItemModel(0,4)
-        self.model.setHorizontalHeaderLabels(['Category', 'Url', 'Username','Password'])
+        self.model = QtGui.QStandardItemModel(0, 4)
+        self.model.setHorizontalHeaderLabels(['Category', 'Url', 'Username', 'Password'])
         self.tableView.setModel(self.model)
+        self.tableView.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.tableView.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.tableView.clicked.connect(self.click_on_table)
 
         self.lineEdit_url = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_url.setGeometry(QtCore.QRect(200, 50, 251, 31))
@@ -74,6 +78,12 @@ class Ui_show_page(object):
         self.inject_btn.setGeometry(QtCore.QRect(460, 50, 151, 71))
         self.inject_btn.setObjectName("inject_btn")
         self.inject_btn.clicked.connect(self.inject_url_username)
+        self.show_info_btn = QtWidgets.QPushButton(self.centralwidget)
+        self.show_info_btn.setGeometry(QtCore.QRect(460, 130, 151, 31))
+        self.show_info_btn.setObjectName("inject_btn")
+        # self.show_info_btn.clicked.connect(self.check_strength)
+
+
         self.back_btn = QtWidgets.QPushButton(self.centralwidget)
         self.back_btn.setGeometry(QtCore.QRect(10, 10, 71, 28))
         self.back_btn.setObjectName("back_btn")
@@ -96,7 +106,14 @@ class Ui_show_page(object):
         self.lineEdit_gpassword.setPlaceholderText(_translate("show_page", " <Please click Inject>"))
         self.label_gpassword.setText(_translate("show_page", "Generated Password"))
         self.inject_btn.setText(_translate("show_page", "Inject"))
+        self.show_info_btn.setText(_translate("show_page", "Check Strength"))
         self.back_btn.setText(_translate("show_page", "<-Back"))
+
+    def click_on_table(self):
+
+        dict1 = self.model.itemData(self.model.index(self.tableView.currentIndex().row(), 3))
+        self.lineEdit_gpassword.setText(dict1[0])
+
 
     def read_urls_usernames(self):
         self.urls = self.raw_data[self.cata]["urls"]
@@ -106,14 +123,14 @@ class Ui_show_page(object):
                 QStandardItem('%s' % self.cata),
                 QStandardItem('%s' % self.urls[i]),
                 QStandardItem('%s' % self.usernames[i]),
-                QStandardItem('%s' % self.pwcalculation(self.string_code,self.urls[i],self.usernames[i]))
+                QStandardItem('%s' % self.pwcalculation(self.string_code, self.urls[i], self.usernames[i]))
             ])
         # print(self.urls)
 
     def inject_url_username(self):
         url = self.lineEdit_url.text()
         username = self.lineEdit_username.text()
-        password = self.pwcalculation(self.string_code,url,username)
+        password = self.pwcalculation(self.string_code, url, username)
         self.lineEdit_gpassword.setText(password)
         # if (url not in self.urls) or (username not in self.urls)
 
@@ -130,8 +147,7 @@ class Ui_show_page(object):
         with open("store", "w") as f:
             f.write(json.dumps(self.raw_data))
 
-
-    def pwcalculation(self,mastercode,url,username):
+    def pwcalculation(self, mastercode, url, username):
         conc = mastercode + url + username
         ha = hashlib.sha256(conc.encode("utf-8")).hexdigest()
         a = binascii.unhexlify(ha)

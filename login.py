@@ -1,8 +1,16 @@
+import json
+
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication
+from PyQt5.QtWidgets import QApplication, QMessageBox
 import sys
+
+from zxcvbn import zxcvbn
+
+import dialog
 import login_ui
 import newpage_ui
+
+import re
 
 
 class loginApp(QtWidgets.QMainWindow, login_ui.Ui_Login_page):
@@ -24,14 +32,37 @@ class loginApp(QtWidgets.QMainWindow, login_ui.Ui_Login_page):
         return self.raw_data
 
 
+
 class newpage(QtWidgets.QMainWindow, newpage_ui.Ui_show_page):
     switch_window_back = QtCore.pyqtSignal()  # 跳转信号
+
     def __init__(self, parent=None):
         super(newpage, self).__init__(parent)
         self.setupUi(self)
         self.back_btn.clicked.connect(self.go_back)
+        self.show_info_btn.clicked.connect(self.check_strength)
+
     def go_back(self):
         self.switch_window_back.emit()
+
+    def check_strength(self):
+        if self.lineEdit_gpassword.text() != "":
+
+            result = zxcvbn(self.lineEdit_gpassword.text())
+            try:
+                result1 = json.dumps(str(result), indent=4)
+                result1 = re.sub(r', ',",\n",result1)
+                self.di = QtWidgets.QDialog()
+                d = dialog.Ui_Dialog()
+                d.setupUi(self.di,result1)
+                self.di.show()
+            except Exception as e:
+                print(e)
+
+        else:
+            QMessageBox.warning(self.centralwidget, 'Password Strength',
+                                "Empty field!")
+
 
 
 class Controller:

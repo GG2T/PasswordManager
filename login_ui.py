@@ -143,10 +143,13 @@ class Ui_Login_page(object):
         if hashlib.sha256(cur_key.encode("utf-8")).hexdigest() == self.raw_data[cata]["Password"]:
 
             print("Approved")
+
             return True
         else:
             print("reject")
             self.clear_select()
+            QMessageBox.warning(self.centralwidget, 'Error',
+                                'Wrong password')
             return False
 
     def combox_box(self):
@@ -212,8 +215,6 @@ class Ui_Login_page(object):
 
                     # print(self.cata_list)
                     file.close()
-
-
 
                 except Exception as e:
                     QMessageBox.warning(self.centralwidget, 'Error',
