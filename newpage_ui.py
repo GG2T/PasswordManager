@@ -7,8 +7,11 @@
 # WARNING! All changes made in this file will be lost!
 import binascii
 import hashlib
+import json
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtGui import QStandardItem
+from PyQt5.QtWidgets import QHeaderView
 
 
 class Ui_show_page(object):
@@ -35,10 +38,15 @@ class Ui_show_page(object):
         self.tableView = QtWidgets.QTableView(self.centralwidget)
         self.tableView.setGeometry(QtCore.QRect(10, 180, 601, 311))
         self.tableView.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
-        self.tableView.setProperty("showDropIndicator", False)
+        self.tableView.setProperty("showDropIndicator", True)
         self.tableView.setDragDropOverwriteMode(False)
+
         self.tableView.setObjectName("tableView")
-        self.tableView.horizontalHeader().setCascadingSectionResizes(True)
+        self.tableView.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.model = QtGui.QStandardItemModel(0,4)
+        self.model.setHorizontalHeaderLabels(['Category', 'Url', 'Username','Password'])
+        self.tableView.setModel(self.model)
+
         self.lineEdit_url = QtWidgets.QLineEdit(self.centralwidget)
         self.lineEdit_url.setGeometry(QtCore.QRect(200, 50, 251, 31))
         self.lineEdit_url.setObjectName("lineEdit_url")
@@ -93,6 +101,13 @@ class Ui_show_page(object):
     def read_urls_usernames(self):
         self.urls = self.raw_data[self.cata]["urls"]
         self.usernames = self.raw_data[self.cata]["usernames"]
+        for i in range(len(self.urls)):
+            self.model.appendRow([
+                QStandardItem('%s' % self.cata),
+                QStandardItem('%s' % self.urls[i]),
+                QStandardItem('%s' % self.usernames[i]),
+                QStandardItem('%s' % self.pwcalculation(self.string_code,self.urls[i],self.usernames[i]))
+            ])
         # print(self.urls)
 
     def inject_url_username(self):
@@ -100,14 +115,31 @@ class Ui_show_page(object):
         username = self.lineEdit_username.text()
         password = self.pwcalculation(self.string_code,url,username)
         self.lineEdit_gpassword.setText(password)
+        # if (url not in self.urls) or (username not in self.urls)
+
+        self.model.appendRow([
+            QStandardItem('%s' % self.cata),
+            QStandardItem('%s' % url),
+            QStandardItem('%s' % username),
+            QStandardItem('%s' % password)
+        ])
+        self.urls.append(url)
+        self.usernames.append(username)
+        self.raw_data[self.cata]["urls"] = self.urls
+        self.raw_data[self.cata]["usernames"] = self.usernames
+        with open("store", "w") as f:
+            f.write(json.dumps(self.raw_data))
+
 
     def pwcalculation(self,mastercode,url,username):
         conc = mastercode + url + username
         ha = hashlib.sha256(conc.encode("utf-8")).hexdigest()
         a = binascii.unhexlify(ha)
-        print(a.hex("-"))
+        # print(a.hex("-"))
         b = [int(x) for x in a]
         c = [(j % 127) % 94 + 33 for j in b]
         d = "".join([chr(z) for z in c])
-        print(d)
+        # print(d)
         return d[:12]
+
+    # def save_to(self):
