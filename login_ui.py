@@ -110,7 +110,7 @@ class Ui_Login_page(object):
         self.enter_btn.setGeometry(QtCore.QRect(750, 465, 131, 81))
         self.enter_btn.setObjectName("enter_btn")
         self.enter_btn.hide()
-        self.enter_btn.clicked.connect(self.validation)
+        # self.enter_btn.clicked.connect(self.validation)
 
         Login_page.setCentralWidget(self.centralwidget)
         self.statusBar = QtWidgets.QStatusBar(Login_page)
@@ -140,11 +140,14 @@ class Ui_Login_page(object):
     def validation(self):
         cata = self.comboBox.currentText()
         cur_key = "".join(sorted(list(self.password_list)))
-        if hashlib.md5(cur_key.encode("utf-8")).hexdigest() == self.raw_data[cata]["Password"]:
+        if hashlib.sha256(cur_key.encode("utf-8")).hexdigest() == self.raw_data[cata]["Password"]:
+
             print("Approved")
+            return True
         else:
             print("reject")
             self.clear_select()
+            return False
 
     def combox_box(self):
         try:
@@ -254,7 +257,7 @@ class Ui_Login_page(object):
                 print(p)
                 key = "".join(p)
 
-                self.raw_data[self.comboBox.currentText()] = {"Password":hashlib.md5(key.encode("utf-8")).hexdigest(), "image" : base64_string}
+                self.raw_data[self.comboBox.currentText()] = {"Password":hashlib.sha256(key.encode("utf-8")).hexdigest(), "image" : base64_string,"urls":[],"usernames":[]}
 
                 with open("store","w") as f:
                     f.write(json.dumps(self.raw_data))
