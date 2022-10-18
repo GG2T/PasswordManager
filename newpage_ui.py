@@ -98,7 +98,7 @@ class Ui_show_page(object):
 
     def retranslateUi(self, show_page):
         _translate = QtCore.QCoreApplication.translate
-        show_page.setWindowTitle(_translate("show_page", "PasswordManager--Login"))
+        show_page.setWindowTitle(_translate("show_page", "PasswordManager--Get Password"))
         self.lineEdit_url.setPlaceholderText(_translate("show_page", " <YouTube>"))
         self.lineEdit_username.setPlaceholderText(_translate("show_page", " <Master_Ma_Bao_Guo>"))
         self.label_url.setText(_translate("show_page", "New URL"))
@@ -113,6 +113,8 @@ class Ui_show_page(object):
 
         dict1 = self.model.itemData(self.model.index(self.tableView.currentIndex().row(), 3))
         self.lineEdit_gpassword.setText(dict1[0])
+        self.lineEdit_url.setText("")
+        self.lineEdit_username.setText("")
 
 
     def read_urls_usernames(self):

@@ -39,6 +39,7 @@ class MyQLabel(QtWidgets.QLabel):
 class Ui_Login_page(object):
 
     def __init__(self):
+        self.wrong_dict = {}
         self.raw_data = {}
         self.d = {}
         self.gridLayout = None
@@ -46,6 +47,10 @@ class Ui_Login_page(object):
         self.centralwidget = None
         self.img_path = ""
         self.local_new = []
+        self.wrong_password = {}
+        self.cur_wrong_password = {}
+        self.lock_cata = []
+        self.attempts = 3
         # self.storage = {}
         # self.record_table = {}
 
@@ -139,17 +144,49 @@ class Ui_Login_page(object):
 
     def validation(self):
         cata = self.comboBox.currentText()
+        self.wrong_password[cata] = self.wrong_password.get(cata, [])
+        self.cur_wrong_password[cata] = self.cur_wrong_password.get(cata, [])
+        print("chances:",self.attempts)
+
         cur_key = "".join(sorted(list(self.password_list)))
-        if hashlib.sha256(cur_key.encode("utf-8")).hexdigest() == self.raw_data[cata]["Password"]:
+        hash = hashlib.sha256(cur_key.encode("utf-8")).hexdigest()
+        if hash in self.wrong_password[cata]:
+            self.attempts += 2
+        if hash == self.raw_data[cata]["Password"]:
+            if len(self.cur_wrong_password[cata]) != 0:
+                if len(self.cur_wrong_password[cata]) < self.attempts:
+                    self.wrong_password[cata].extend(self.cur_wrong_password[cata])
+                else:
+                    self.wrong_password[cata].extend(self.cur_wrong_password[cata][1 - self.attempts:])
+            self.raw_data["wrong"] = self.wrong_password
+            with open("store", "w") as f:
+                f.write(json.dumps(self.raw_data))
+
 
             print("Approved")
 
             return True
         else:
-            print("reject")
-            self.clear_select()
-            QMessageBox.warning(self.centralwidget, 'Error',
-                                'Wrong password')
+            try:
+                print("reject")
+                self.cur_wrong_password[cata].append(hash)
+                self.wrong_dict[cata] = self.wrong_dict.get(cata, 0) + 1
+                if self.wrong_dict[cata] >= self.attempts:
+                    self.enter_btn.setDisabled(True)
+                    self.lock_cata.append(cata)
+
+                    self.comboBox.setCurrentIndex(0)
+                    self.raw_data["lock"] = self.lock_cata
+                    with open("store", "w") as f:
+                        f.write(json.dumps(self.raw_data))
+
+                    # self.comboBox.model().setData(index, 0, QtCore.Qt.UserRole - 1)
+
+                self.clear_select()
+                QMessageBox.warning(self.centralwidget, 'Error',
+                                    'Wrong password')
+            except Exception as e:
+                print(e)
             return False
 
     def combox_box(self):
@@ -158,6 +195,10 @@ class Ui_Login_page(object):
             self.clear_select()
             if self.comboBox.currentText() in self.cata_list:
                 self.enter_btn.show()
+                if self.comboBox.currentText() in self.lock_cata:
+                    self.enter_btn.setDisabled(True)
+                else:
+                    self.enter_btn.setDisabled(False)
                 self.hide_import_save()
 
                 base64_string = self.raw_data[self.comboBox.currentText()]["image"]
@@ -195,10 +236,20 @@ class Ui_Login_page(object):
                     self.raw_data = json.loads(file.read())
 
                 self.cata_list = list(self.raw_data.keys())
+                try:
+                    self.cata_list.remove("wrong")
+                    self.cata_list.remove("lock")
+                except:
+                    pass
+
+
                 file.close()
             except Exception as e:
-                QMessageBox.warning(self.centralwidget, 'Error',
-                                f'The following error occurred:\n{type(e)}: {e}')
+                if "wrong" or "lock" in e:
+                    pass
+                else:
+                    QMessageBox.warning(self.centralwidget, 'Error',
+                                        f'The following error occurred:\n{type(e)}: {e}')
 
 
     def read_storage(self):
@@ -210,15 +261,26 @@ class Ui_Login_page(object):
                         self.raw_data = json.loads(file.read())
 
                     self.cata_list = list(self.raw_data.keys())
+                    try:
+                        self.cata_list.remove("wrong")
+                        self.cata_list.remove("lock")
+                    except:
+                        pass
                     if self.comboBox.currentText() not in self.cata_list:
                         self.comboBox.addItems(self.cata_list)
+                    self.wrong_password = self.raw_data["wrong"]
+                    self.lock_cata = self.raw_data["lock"]
 
                     # print(self.cata_list)
                     file.close()
 
                 except Exception as e:
-                    QMessageBox.warning(self.centralwidget, 'Error',
-                                        f'The following error occurred:\n{type(e)}: {e}')
+                    if "wrong" or "lock" in e:
+                        pass
+                    else:
+                        QMessageBox.warning(self.centralwidget, 'Error',
+                                            f'The following error occurred:\n{type(e)}: {e}')
+
             else:
                 pass
 
@@ -286,7 +348,7 @@ class Ui_Login_page(object):
         text, ok = QInputDialog.getText(self.centralwidget, 'Text Input Dialog', 'Set a new catalogue')
         if ok:
             # list1 = self.comboBox.
-            if text in self.cata_list or text in self.local_new:
+            if text in self.cata_list or text in self.local_new or text == 'lock' or text == 'wrong':
                 QMessageBox.warning(self.centralwidget, 'Error', "The category already exists")
             else:
                 self.comboBox.addItem(text)
@@ -294,6 +356,7 @@ class Ui_Login_page(object):
                 self.comboBox.setCurrentText(text)
                 self.clear_pic()
                 self.clear_select()
+                self.enter_btn.setDisabled(False)
 
 
         else:
