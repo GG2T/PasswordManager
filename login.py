@@ -37,7 +37,7 @@ class Controller:
         self.form = loginApp()
         self.form2 = newpage()
 
-    # 跳转到 hello 窗口
+
     def show_login(self):
         self.form.switch_window1.connect(self.show_new)
         self.form.show()
@@ -45,8 +45,9 @@ class Controller:
     def show_new(self):
         pass_parameters = self.form.get_code()
         string_code = ''.join(sorted(list(pass_parameters)))
-        self.form2.set_string_code(string_code)
+        self.form2.set_string_code(string_code,self.form.comboBox.currentText())
         self.form2.set_raw_data(self.form.get_dic())
+        self.form2.read_urls_usernames()
         self.form.close()
         self.form2.show()
 
