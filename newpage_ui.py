@@ -103,7 +103,7 @@ class Ui_show_page(object):
         self.lineEdit_username.setPlaceholderText(_translate("show_page", " <Master_Ma_Bao_Guo>"))
         self.label_url.setText(_translate("show_page", "New URL"))
         self.label_username.setText(_translate("show_page", "New Username"))
-        self.lineEdit_gpassword.setPlaceholderText(_translate("show_page", " <Please click Inject>"))
+        self.lineEdit_gpassword.setPlaceholderText(_translate("show_page", " <Show_Password>"))
         self.label_gpassword.setText(_translate("show_page", "Generated Password"))
         self.inject_btn.setText(_translate("show_page", "Inject"))
         self.show_info_btn.setText(_translate("show_page", "Check Strength"))
@@ -128,24 +128,29 @@ class Ui_show_page(object):
         # print(self.urls)
 
     def inject_url_username(self):
-        url = self.lineEdit_url.text()
-        username = self.lineEdit_username.text()
-        password = self.pwcalculation(self.string_code, url, username)
-        self.lineEdit_gpassword.setText(password)
-        # if (url not in self.urls) or (username not in self.urls)
+        if self.lineEdit_url.text() != "" and self.lineEdit_username.text() != "":
+            url = self.lineEdit_url.text()
+            username = self.lineEdit_username.text()
+            password = self.pwcalculation(self.string_code, url, username)
+            self.lineEdit_gpassword.setText(password)
+            # if (url not in self.urls) or (username not in self.urls)
 
-        self.model.appendRow([
-            QStandardItem('%s' % self.cata),
-            QStandardItem('%s' % url),
-            QStandardItem('%s' % username),
-            QStandardItem('%s' % password)
-        ])
-        self.urls.append(url)
-        self.usernames.append(username)
-        self.raw_data[self.cata]["urls"] = self.urls
-        self.raw_data[self.cata]["usernames"] = self.usernames
-        with open("store", "w") as f:
-            f.write(json.dumps(self.raw_data))
+            self.model.appendRow([
+                QStandardItem('%s' % self.cata),
+                QStandardItem('%s' % url),
+                QStandardItem('%s' % username),
+                QStandardItem('%s' % password)
+            ])
+            self.urls.append(url)
+            self.usernames.append(username)
+            self.raw_data[self.cata]["urls"] = self.urls
+            self.raw_data[self.cata]["usernames"] = self.usernames
+            with open("store", "w") as f:
+                f.write(json.dumps(self.raw_data))
+        else:
+            QMessageBox.warning(self.centralwidget,"Error","Please enter url and username")
+
+
 
     def pwcalculation(self, mastercode, url, username):
         conc = mastercode + url + username
