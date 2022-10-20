@@ -99,8 +99,8 @@ class Ui_show_page(object):
     def retranslateUi(self, show_page):
         _translate = QtCore.QCoreApplication.translate
         show_page.setWindowTitle(_translate("show_page", "PasswordManager--Get Password"))
-        self.lineEdit_url.setPlaceholderText(_translate("show_page", " <YouTube>"))
-        self.lineEdit_username.setPlaceholderText(_translate("show_page", " <Master_Ma_Bao_Guo>"))
+        self.lineEdit_url.setPlaceholderText(_translate("show_page", "e.g., www.YouTube.com"))
+        self.lineEdit_username.setPlaceholderText(_translate("show_page", "e.g., Alice101"))
         self.label_url.setText(_translate("show_page", "New URL"))
         self.label_username.setText(_translate("show_page", "New Username"))
         self.lineEdit_gpassword.setPlaceholderText(_translate("show_page", " <Show_Password>"))

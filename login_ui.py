@@ -51,6 +51,7 @@ class Ui_Login_page(object):
         self.cur_wrong_password = {}
         self.lock_cata = []
         self.attempts = 3
+        self.chances_remain = {}
         # self.storage = {}
         # self.record_table = {}
 
@@ -95,7 +96,7 @@ class Ui_Login_page(object):
         self.comboBox.setObjectName("comboBox")
         # self.infor = ["Or select an exist catalogue"]
         # self.comboBox.addItems(self.infor)
-        self.comboBox.addItem("Or select an exist catalogue")
+        self.comboBox.addItem("Or select an exist category")
         self.comboBox.currentIndexChanged.connect(self.combox_box)
 
         self.import_btn = QtWidgets.QPushButton(self.centralwidget)
@@ -133,7 +134,7 @@ class Ui_Login_page(object):
             for j in range(8):
                 self.d["label" + str(i) + str(j)].setText(str(i) + str(j))
 
-        self.New_btn.setText(_translate("Login_page", "Set a new catalogue"))
+        self.New_btn.setText(_translate("Login_page", "Set a new category"))
         # self.comboBox.setCurrentText(_translate("Login_page", "Or select an exist catalogue"))
         # self.comboBox.setItemText(0, _translate("Login_page", "Or select an exist catalogue"))
         self.import_btn.setText(_translate("Login_page", "Import picture"))
@@ -146,12 +147,14 @@ class Ui_Login_page(object):
         cata = self.comboBox.currentText()
         self.wrong_password[cata] = self.wrong_password.get(cata, [])
         self.cur_wrong_password[cata] = self.cur_wrong_password.get(cata, [])
-        print("chances:",self.attempts)
+        self.chances_remain[cata] = self.chances_remain.get(cata,3)
+        # print("chances:",self.chances_remain[cata])
 
         cur_key = "".join(sorted(list(self.password_list)))
         hash = hashlib.sha256(cur_key.encode("utf-8")).hexdigest()
         if hash in self.wrong_password[cata]:
-            self.attempts += 2
+            self.attempts = 6
+            self.chances_remain[cata] = 6 - len(self.cur_wrong_password[cata])
         if hash == self.raw_data[cata]["Password"]:
             if len(self.cur_wrong_password[cata]) != 0:
                 if len(self.cur_wrong_password[cata]) < self.attempts:
@@ -171,6 +174,8 @@ class Ui_Login_page(object):
                 print("reject")
                 self.cur_wrong_password[cata].append(hash)
                 self.wrong_dict[cata] = self.wrong_dict.get(cata, 0) + 1
+                self.chances_remain[cata] -= 1
+
                 if self.wrong_dict[cata] >= self.attempts:
                     self.enter_btn.setDisabled(True)
                     self.lock_cata.append(cata)
@@ -184,7 +189,7 @@ class Ui_Login_page(object):
 
                 self.clear_select()
                 QMessageBox.warning(self.centralwidget, 'Error',
-                                    'Wrong password')
+                                    'Wrong password, {} attempt(s) remaining'.format(self.chances_remain[cata]))
             except Exception as e:
                 print(e)
             return False
@@ -301,7 +306,7 @@ class Ui_Login_page(object):
     def save_catalogue(self):
         try:
             if self.comboBox.currentIndex() == 0:
-                raise ValueError("Plase select an catalogue or Create one")
+                raise ValueError("Plase select an category or Create one")
             if self.img_path == "":
                 raise ValueError("please choose a picture first")
             if len(self.password_list) == 0:
@@ -345,7 +350,7 @@ class Ui_Login_page(object):
                 self.d["label" + str(i) + str(j)].setText(str(i) + str(j))
 
     def new_catalogue(self):
-        text, ok = QInputDialog.getText(self.centralwidget, 'Text Input Dialog', 'Set a new catalogue')
+        text, ok = QInputDialog.getText(self.centralwidget, 'Text Input Dialog', 'Set a new category')
         if ok:
             # list1 = self.comboBox.
             if text in self.cata_list or text in self.local_new or text == 'lock' or text == 'wrong':
