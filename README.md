@@ -7,7 +7,7 @@ A graphic based password manager.
 ```
 
 ## How to run:
-Simply run the ***.exe*** file in folder ***dist***
+Simply run the ***.exe*** file
 
 or
 
